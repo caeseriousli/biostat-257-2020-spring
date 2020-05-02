@@ -11786,7 +11786,7 @@ $$
 -\frac{n_i}{2}log(2\pi)-\frac{1}{2}log(|\boldsymbol{D}|)-\frac{1}{2}(\boldsymbol{y}_i - \boldsymbol{X}_i \boldsymbol{\beta})^{T}\boldsymbol{D}^{-1}(\boldsymbol{y}_i - \boldsymbol{X}_i \boldsymbol{\beta})
 $$</p>
 <p>, where $\boldsymbol{D} = \boldsymbol{Z}_i\boldsymbol{\Sigma}\boldsymbol{Z}^{T}_i + \sigma^2\boldsymbol{I}_n$</p>
-<p>Before we move on, we can make the computing more efficient by utilizing binomial inversion formula on $\boldsymbol{D}$:</p>
+<p>Before we move on, we can make the computing more efficient by utilizing Woodbury formula on $\boldsymbol{D}$:</p>
 <p>$$
 \boldsymbol{D}^{-1} = \frac{1}{\sigma^2}\boldsymbol{I}^{-1} - \frac{1}{\sigma^2}\boldsymbol{I}^{-1}\boldsymbol{Z}_i(\boldsymbol{\Sigma}^{-1} + \frac{1}{\sigma^2}\boldsymbol{Z}^{T}_i\boldsymbol{I}^{-1}\boldsymbol{Z}_i)^{-1}\boldsymbol{Z}^{T}_i\frac{1}{\sigma^2}\boldsymbol{I}^{-1}
 $$</p>
@@ -11887,7 +11887,7 @@ $$
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[243]:</div>
+<div class="prompt input_prompt">In&nbsp;[39]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-julia"><pre><span></span><span class="k">function</span> <span class="n">logl!</span><span class="p">(</span>
@@ -11898,10 +11898,15 @@ $$
     <span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span> <span class="o">=</span> <span class="n">size</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">size</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">size</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">Z</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>    
     <span class="c"># TODO: compute and return the log-likelihood</span>
     <span class="c">#obs.storage_qq .= I + transpose(L) * obs.ztz * L / σ²</span>
-    <span class="n">obs</span><span class="o">.</span><span class="n">storage_qq</span> <span class="o">.=</span> <span class="kt">Matrix</span><span class="p">(</span><span class="nb">I</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
-    <span class="n">BLAS</span><span class="o">.</span><span class="n">gemm!</span><span class="p">(</span><span class="sc">&#39;T&#39;</span><span class="p">,</span> <span class="sc">&#39;N&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="n">σ²</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">obs</span><span class="o">.</span><span class="n">ztz</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">obs</span><span class="o">.</span><span class="n">storage_qq</span><span class="p">)</span>
+    <span class="c">#obs.storage_qq .= Matrix(I, q, q)</span>
     
-    <span class="n">dtmt</span> <span class="o">=</span> <span class="n">logdet</span><span class="p">(</span><span class="n">cholesky!</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">storage_qq</span><span class="p">))</span>
+    <span class="n">BLAS</span><span class="o">.</span><span class="n">gemm!</span><span class="p">(</span><span class="sc">&#39;T&#39;</span><span class="p">,</span> <span class="sc">&#39;N&#39;</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">σ²</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">obs</span><span class="o">.</span><span class="n">ztz</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">obs</span><span class="o">.</span><span class="n">storage_qq</span><span class="p">)</span>
+    <span class="n">BLAS</span><span class="o">.</span><span class="n">trmm!</span><span class="p">(</span><span class="sc">&#39;R&#39;</span><span class="p">,</span> <span class="sc">&#39;L&#39;</span><span class="p">,</span> <span class="sc">&#39;N&#39;</span><span class="p">,</span> <span class="sc">&#39;N&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">obs</span><span class="o">.</span><span class="n">storage_qq</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="o">:</span><span class="n">q</span>
+        <span class="n">obs</span><span class="o">.</span><span class="n">storage_qq</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">end</span>
+    
+    <span class="n">dtmt</span> <span class="o">=</span> <span class="n">logdet</span><span class="p">(</span><span class="n">cholesky!</span><span class="p">(</span><span class="kt">Symmetric</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">storage_qq</span><span class="p">)))</span>
     
     <span class="n">BLAS</span><span class="o">.</span><span class="n">gemm!</span><span class="p">(</span><span class="sc">&#39;N&#39;</span><span class="p">,</span> <span class="sc">&#39;T&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">obs</span><span class="o">.</span><span class="n">storage_qq</span><span class="p">)</span>
     <span class="n">obs</span><span class="o">.</span><span class="n">storage_qq</span> <span class="o">.=</span> <span class="n">inv</span><span class="p">(</span><span class="n">cholesky!</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">storage_qq</span><span class="p">))</span> <span class="o">*</span> <span class="n">σ²</span> <span class="o">+</span> <span class="n">obs</span><span class="o">.</span><span class="n">ztz</span>
@@ -11912,7 +11917,7 @@ $$
     
     <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="n">n</span><span class="o">//</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="nb">π</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span><span class="o">//</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">log</span><span class="p">(</span><span class="n">σ²</span><span class="p">)</span> <span class="o">+</span> <span class="n">dtmt</span><span class="p">)</span> <span class="o">-</span>
         <span class="p">(</span><span class="mi">1</span><span class="o">//</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">sig_inv</span> <span class="o">*</span> <span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">obs</span><span class="o">.</span><span class="n">res</span><span class="p">)</span> <span class="o">-</span> 
-        <span class="n">dot</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">storage_q</span><span class="p">,</span> <span class="n">cholesky!</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">storage_qq</span><span class="p">)</span> <span class="o">\</span> <span class="n">obs</span><span class="o">.</span><span class="n">storage_q</span><span class="p">))</span>
+        <span class="n">dot</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">storage_q</span><span class="p">,</span> <span class="n">cholesky!</span><span class="p">(</span><span class="kt">Symmetric</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">storage_qq</span><span class="p">))</span> <span class="o">\</span> <span class="n">obs</span><span class="o">.</span><span class="n">storage_q</span><span class="p">))</span>
     
     <span class="c">#sleep(1e-3) # wait 1 ms as if your code takes 1ms</span>
     <span class="c">#return 0.0</span>
@@ -11929,7 +11934,7 @@ $$
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[243]:</div>
+<div class="prompt output_prompt">Out[39]:</div>
 
 
 
@@ -11954,7 +11959,7 @@ $$
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="prompt input_prompt">In&nbsp;[30]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-julia"><pre><span></span><span class="k">using</span> <span class="n">BenchmarkTools</span><span class="p">,</span> <span class="n">Distributions</span><span class="p">,</span> <span class="n">LinearAlgebra</span><span class="p">,</span> <span class="n">Random</span>
@@ -11986,13 +11991,13 @@ $$
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[2]:</div>
+<div class="prompt output_prompt">Out[30]:</div>
 
 
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>LmmObs{Float64}([5.739048710854997, 5.705395720270055, 2.7368899643050355, 1.4201223592870755, -0.2099433929180451, 3.5886971824690486, -1.3778538474575956, -0.08406026821055246, -2.208007878450787, 1.309558511583542  …  1.294787618017269, -1.9701265304395086, -2.040383092851745, -1.4590296825658675, 0.18616271231054726, 1.0681247149968018, 2.2292080864625254, 1.195238535460355, 1.1310626949609701, -0.43507816286713785], [1.0 -2.506566300781151 … 0.5863780184080776 1.1092991040518192; 1.0 -0.974090320735282 … 1.4143507320583761 0.45608259198567447; … ; 1.0 -1.0076371084863895 … -1.3241972696483915 1.4547609424344008; 1.0 0.38036793320364776 … -0.5857507269707397 1.796804266836504], [1.0 -0.6380567326757537 1.4738982136806946; 1.0 -2.0711110232845926 0.21422658785510312; … ; 1.0 0.5917731507133951 -0.9163364468263059; 1.0 0.9463732120394507 -0.325860403600768], [3.5e-323, 2.1641356e-316, 2.1641279e-316, 1.5299271353490974e-308, 1.03e-321, 2.6734398e-316, 2.1641451e-316, 2.1641435e-316, 2.5463949659e-313, 6.15378779424e-313  …  2.16492175e-316, 2.16492214e-316, 1.41794755e-316, 9.8e-322, NaN, NaN, NaN, 2.1219957905e-314, NaN, 6.47e-322], [0.0, 5.0e-324, 1.0e-323], [2000.0 -11.203585688587815 -23.356385339139585; -11.203585688587815 1972.7426082447307 27.30329698263217; -23.356385339139585 27.30329698263217 2034.2034944863567], [0.0 1.0e-323 1.5e-323; 5.0e-324 5.0e-324 5.0e-324; 2.31878854180646e-310 2.3187885418065e-310 1.27e-321])</pre>
+<pre>LmmObs{Float64}([5.739048710854997, 5.705395720270055, 2.7368899643050355, 1.4201223592870758, -0.2099433929180451, 3.5886971824690486, -1.3778538474575956, -0.08406026821055201, -2.208007878450787, 1.309558511583542  …  1.2947876180172686, -1.970126530439509, -2.040383092851745, -1.459029682565868, 0.18616271231054726, 1.0681247149968018, 2.2292080864625254, 1.195238535460355, 1.1310626949609706, -0.43507816286713696], [1.0 -2.506566300781151 … 0.5863780184080776 1.1092991040518192; 1.0 -0.974090320735282 … 1.4143507320583761 0.45608259198567447; … ; 1.0 -1.0076371084863895 … -1.3241972696483915 1.4547609424344008; 1.0 0.38036793320364776 … -0.5857507269707397 1.796804266836504], [1.0 -0.6380567326757537 1.4738982136806946; 1.0 -2.0711110232845926 0.21422658785510312; … ; 1.0 0.5917731507133951 -0.9163364468263059; 1.0 0.9463732120394507 -0.325860403600768], [8.0e-323, 8.4e-323, 9.0e-323, 9.4e-323, 1.0e-322, 1.04e-322, 1.1e-322, 1.14e-322, 1.2e-322, 1.24e-322  …  3.26e-322, 3.3e-322, 3.36e-322, 3.4e-322, 3.46e-322, 3.5e-322, 3.56e-322, 3.6e-322, 3.66e-322, 3.7e-322], [2.34549507059096e-310, 2.34549507029847e-310, 2.3454950705862e-310], [2000.0 -11.20358568858784 -23.356385339139617; -11.20358568858784 1972.7426082447307 27.303296982632183; -23.356385339139617 27.303296982632183 2034.203494486357], [1.14e-322 1.24e-322 1.3e-322; 4.4e-323 5.0e-323 5.4e-323; 2.3454947360105e-310 2.3454947360105e-310 2.34549473601055e-310])</pre>
 </div>
 
 </div>
@@ -12003,7 +12008,7 @@ $$
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="prompt input_prompt">In&nbsp;[40]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-julia"><pre><span></span><span class="n">μ</span>  <span class="o">=</span> <span class="n">X</span> <span class="o">*</span> <span class="n">β</span>
@@ -12022,7 +12027,7 @@ $$
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[3]:</div>
+<div class="prompt output_prompt">Out[40]:</div>
 
 
 
@@ -12048,7 +12053,7 @@ $$
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[245]:</div>
+<div class="prompt input_prompt">In&nbsp;[41]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-julia"><pre><span></span><span class="n">L</span> <span class="o">=</span> <span class="kt">Matrix</span><span class="p">(</span><span class="n">cholesky</span><span class="p">(</span><span class="n">Σ</span><span class="p">)</span><span class="o">.</span><span class="n">L</span><span class="p">)</span>
@@ -12065,13 +12070,13 @@ $$
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[245]:</div>
+<div class="prompt output_prompt">Out[41]:</div>
 
 
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>-3247.456858063824</pre>
+<pre>-3247.456858063825</pre>
 </div>
 
 </div>
@@ -12082,7 +12087,7 @@ $$
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[175]:</div>
+<div class="prompt input_prompt">In&nbsp;[42]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-julia"><pre><span></span><span class="nd">@assert</span> <span class="n">logl!</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">β</span><span class="p">,</span> <span class="kt">Matrix</span><span class="p">(</span><span class="n">cholesky</span><span class="p">(</span><span class="n">Σ</span><span class="p">)</span><span class="o">.</span><span class="n">L</span><span class="p">),</span> <span class="n">σ²</span><span class="p">)</span> <span class="n">≈</span> <span class="n">logpdf</span><span class="p">(</span><span class="n">mvn</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
@@ -12105,7 +12110,7 @@ $$
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[247]:</div>
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-julia"><pre><span></span><span class="c"># benchmark the `logpdf` function in Distribution.jl</span>
@@ -12122,7 +12127,7 @@ $$
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[247]:</div>
+<div class="prompt output_prompt">Out[6]:</div>
 
 
 
@@ -12132,12 +12137,12 @@ $$
   memory estimate:  30.55 MiB
   allocs estimate:  4
   --------------
-  minimum time:     43.900 ms (6.86% GC)
-  median time:      52.614 ms (3.82% GC)
-  mean time:        50.189 ms (4.63% GC)
-  maximum time:     56.840 ms (3.70% GC)
+  minimum time:     57.799 ms (4.07% GC)
+  median time:      69.587 ms (2.03% GC)
+  mean time:        69.070 ms (6.87% GC)
+  maximum time:     232.618 ms (70.73% GC)
   --------------
-  samples:          100
+  samples:          73
   evals/sample:     1</pre>
 </div>
 
@@ -12149,7 +12154,7 @@ $$
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[246]:</div>
+<div class="prompt input_prompt">In&nbsp;[43]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-julia"><pre><span></span><span class="c"># benchmark your implementation</span>
@@ -12167,20 +12172,20 @@ $$
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[246]:</div>
+<div class="prompt output_prompt">Out[43]:</div>
 
 
 
 
 <div class="output_text output_subarea output_execute_result">
 <pre>BenchmarkTools.Trial: 
-  memory estimate:  1.22 KiB
-  allocs estimate:  21
+  memory estimate:  992 bytes
+  allocs estimate:  19
   --------------
-  minimum time:     37.636 μs (0.00% GC)
-  median time:      41.409 μs (0.00% GC)
-  mean time:        59.146 μs (0.00% GC)
-  maximum time:     4.999 ms (0.00% GC)
+  minimum time:     41.053 μs (0.00% GC)
+  median time:      47.407 μs (0.00% GC)
+  mean time:        48.125 μs (0.00% GC)
+  maximum time:     344.959 μs (0.00% GC)
   --------------
   samples:          10000
   evals/sample:     1</pre>
@@ -12194,7 +12199,7 @@ $$
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[248]:</div>
+<div class="prompt input_prompt">In&nbsp;[44]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-julia"><pre><span></span><span class="c"># this is the points you&#39;ll get </span>
@@ -12211,7 +12216,7 @@ $$
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[248]:</div>
+<div class="prompt output_prompt">Out[44]:</div>
 
 
 
@@ -12238,7 +12243,7 @@ You want to avoid memory allocation in the "hot" function <code>logl!</code>. Yo
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[249]:</div>
+<div class="prompt input_prompt">In&nbsp;[45]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-julia"><pre><span></span><span class="n">clamp</span><span class="p">(</span><span class="mi">30</span> <span class="o">-</span> <span class="n">median</span><span class="p">(</span><span class="n">bm2</span><span class="p">)</span><span class="o">.</span><span class="n">memory</span> <span class="o">/</span> <span class="mi">1024</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
@@ -12254,13 +12259,13 @@ You want to avoid memory allocation in the "hot" function <code>logl!</code>. Yo
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[249]:</div>
+<div class="prompt output_prompt">Out[45]:</div>
 
 
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>28.78125</pre>
+<pre>29.03125</pre>
 </div>
 
 </div>
