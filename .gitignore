@@ -1,0 +1,4 @@
+# Ignore all Jupyter checkpoint files
+*.ipynb_checkpoints
+# Ignore the dataset downloaded for hw3
+hw3/pgrksol.csv
