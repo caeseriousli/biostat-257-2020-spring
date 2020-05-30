@@ -26,7 +26,7 @@
 * Q1 (4/5 pts)
 
     - You wrote **P** = p **BA** + **c1**' / n. You don't need the extra division by n. This looks like a typo? `(-1 pt)`
-
+(Not a typo. The way I defined c, it does not have 1/n inbedded so I needed the n to make it a probability)
 * Q2 
 	
 * Q3 (10/10 pts)
@@ -50,7 +50,7 @@
     * Step 4 (20/20 pts)
 
         - Not sure why your functions are so slow on your machine. When run on my machine you get full points.
-
+(Yes I've been running on Hoffman2 interaction node and apparently it was a big mistake. Now hw4 Q8 Q9 crashes my node every time)
 * Q6 (2/5 pts)
     
     - You forgot to compare to the pages ranked by in-degree. `(-3 pts)`
