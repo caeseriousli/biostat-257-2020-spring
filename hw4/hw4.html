@@ -14063,7 +14063,39 @@ lmm.∇L = [20.19709774965016 -4.566719695066214 9.073934365208512; -5.895609775
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="5--Q5.-(30-pts)-Starting-point">5  Q5. (30 pts) Starting point<a class="anchor-link" href="#5--Q5.-(30-pts)-Starting-point">&#182;</a></h2><p>We implement this start point strategy in the function <code>init_ls()</code>.</p>
+<h2 id="5--Q5.-(30-pts)-Starting-point">5  Q5. (30 pts) Starting point<a class="anchor-link" href="#5--Q5.-(30-pts)-Starting-point">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+$$
+    \text{minimize} \sum_i \| \mathbf{r}_i^{(0)} \mathbf{r}_i^{(0)T} - \mathbf{Z}_i \boldsymbol{\Sigma} \mathbf{Z}_i^T \|_{\text{F}}^2.
+$$<p>Let $ \mathbf{r}_i^{(0)} \mathbf{r}_i^{(0)T} - \mathbf{Z}_i \boldsymbol{\Sigma} \mathbf{Z}_i^T = \mathbf{A}_i$. Then we are minimizing $\sum_i tr(\mathbf{A}^T_i\mathbf{A}_i)$. We can minimize by setting its gradient to zero.
+$$
+\mathbf{D}_{\boldsymbol{\Sigma}} \mathbf{A}_i = \mathbf{Z}_i \otimes \mathbf{Z}_i \\
+\mathbf{D}_{\mathbf{A}_i} \text{objective} = 2 \sum_i \mathbf{A}_i \\
+\mathbf{D}_{\boldsymbol{\Sigma}} \text{objective} = \mathbf{D}_{\mathbf{A}_i} \text{objective} \cdot \mathbf{D}_{\boldsymbol{\Sigma}} \mathbf{A}_i \\
+= 2 (vec(\mathbf{A}_i))^T (\mathbf{Z}_i \otimes \mathbf{Z}_i) \\
+= 2 (\mathbf{Z}_i \otimes \mathbf{Z}_i)vec(\mathbf{A}_i) \\
+= 2 vec\mathbf{Z}^T_i\mathbf{A}_i\mathbf{Z}_i = 2 \mathbf{Z}^T_i\mathbf{A}_i\mathbf{Z}_i \\
+\text{set to}= 0
+$$</p>
+$$
+\implies \sum_i (\mathbf{Z}^T_i\mathbf{r}_i\mathbf{r}^T_i\mathbf{Z}_i - \mathbf{Z}^T_i\mathbf{Z}_i \boldsymbol{\Sigma^{(0)}} \mathbf{Z}^T_i\mathbf{Z}_i) = 0 \\
+\implies \sum_i \mathbf{Z}^T_i\mathbf{r}_i\mathbf{r}^T_i\mathbf{Z}_i = \sum_i \mathbf{Z}^T_i\mathbf{Z}_i \boldsymbol{\Sigma^{(0)}} \mathbf{Z}^T_i\mathbf{Z}_i \\
+\implies \sum_i vec(\mathbf{Z}^T_i\mathbf{r}_i\mathbf{r}^T_i\mathbf{Z}_i) = \sum_i vec(\mathbf{Z}^T_i\mathbf{Z}_i \boldsymbol{\Sigma^{(0)}} \mathbf{Z}^T_i\mathbf{Z}_i) \\
+\implies (\sum_i\mathbf{Z}^T_i\mathbf{r}_i \otimes \mathbf{r}^T_i\mathbf{Z}_i) = (\sum_i\mathbf{Z}^T_i\mathbf{Z}_i \otimes \mathbf{Z}^T_i\mathbf{Z}_i)vec(\boldsymbol{\Sigma^{(0)}}) \\
+\implies vec(\boldsymbol{\Sigma^{(0)}}) = (\sum_i\mathbf{Z}^T_i\mathbf{Z}_i \otimes \mathbf{Z}^T_i\mathbf{Z}_i)^{-1} (\sum_i \mathbf{Z}^T_i\mathbf{r}_i \otimes \mathbf{r}^T_i\mathbf{Z}_i)
+$$
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We implement this start point strategy in the function <code>init_ls()</code>.</p>
 
 </div>
 </div>
