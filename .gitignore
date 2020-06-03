@@ -2,3 +2,4 @@
 *.ipynb_checkpoints
 # Ignore the dataset downloaded for hw3
 hw3/pgrksol.csv
+hw4/lmm_data.txt
