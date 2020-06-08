@@ -1,6 +1,6 @@
 *Caesar Li*
 
-### Overall Grade: 116/125
+### Overall Grade: 119/125
 
 ### Quality of report: 10/10
 
@@ -35,11 +35,9 @@
 
 * Q5
 
-    * Step 1 (10/15 pts)
+    * Step 1 (13/15 pts)
 
         - In your (I - P) * v `mul!` function you have `out .= v .- M.storage_n1 - M.storage_n2`. You need to have `.-` on `M.storage_n1 - M.storage_n2` or else you'll allocate another vector of length n. `(-2 pts)`. It doesn't seem like your html was run all at once, because the memory allocation benchmark doesnt reflect this mistake.
-
-        - `pgrksol.csv` in repository. Instructions specifically asked to **not** do this. `(-3 pts)`
 
     * Step 2 (20/20 pts)
 
